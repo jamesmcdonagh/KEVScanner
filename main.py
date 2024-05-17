@@ -45,31 +45,29 @@ def load_data_from_file(filename):
     else:
         return None
 
-# Function to get a list of unique applications
-def get_unique_applications(vulnerabilities):
-    applications = set()
-    for item in vulnerabilities:
-        applications.update(item['product'].split(", "))
-    return sorted(applications)
+# Function to get a list of unique vendors
+def get_unique_vendors(vulnerabilities):
+    return sorted(set(item['vendorProject'] for item in vulnerabilities))
 
-# Function to filter vulnerabilities by application
-def filter_vulnerabilities_by_application(vulnerabilities, application):
-    return [item for item in vulnerabilities if application in item['product']]
+# Function to filter vulnerabilities by vendor
+def filter_vulnerabilities_by_vendor(vulnerabilities, vendor):
+    return [item for item in vulnerabilities if item['vendorProject'] == vendor]
 
 # Function to display vulnerabilities in the GUI
 def display_vulnerabilities(vulnerabilities):
     result_text.delete('1.0', tk.END)
     for vulnerability in vulnerabilities:
         result_text.insert(tk.END, f"CVE ID: {vulnerability['cveID']}\n")
-        result_text.insert(tk.END, f"Description: {vulnerability['description']}\n")
         result_text.insert(tk.END, f"Product: {vulnerability['product']}\n")
-        result_text.insert(tk.END, f"Vendor Project: {vulnerability['vendorProject']}\n")
+        result_text.insert(tk.END, f"Vulnerability Name: {vulnerability['vulnerabilityName']}\n")
+        result_text.insert(tk.END, f"Date Added: {vulnerability['dateAdded']}\n")
+        result_text.insert(tk.END, f"Short Description: {vulnerability['shortDescription']}\n")
         result_text.insert(tk.END, "\n")
 
-# Function to handle application selection
+# Function to handle vendor selection
 def on_select(event):
-    selected_application = application_combobox.get()
-    filtered_vulnerabilities = filter_vulnerabilities_by_application(current_data['vulnerabilities'], selected_application)
+    selected_vendor = vendor_combobox.get()
+    filtered_vulnerabilities = filter_vulnerabilities_by_vendor(current_data['vulnerabilities'], selected_vendor)
     display_vulnerabilities(filtered_vulnerabilities)
 
 # Fetch current data
@@ -86,19 +84,19 @@ new_vulnerabilities = compare_data(current_data['vulnerabilities'], previous_dat
 # Save current data for future comparisons
 save_data_to_file(current_data['vulnerabilities'], previous_data_file)
 
-# Get unique applications from the vulnerabilities
-applications = get_unique_applications(current_data['vulnerabilities'])
+# Get unique vendors from the vulnerabilities
+vendors = get_unique_vendors(current_data['vulnerabilities'])
 
 # Create the main window
 root = tk.Tk()
 root.title("Vulnerability Scanner")
 
-# Create and pack the application combobox
-application_label = tk.Label(root, text="Select Application:")
-application_label.pack(pady=5)
-application_combobox = ttk.Combobox(root, values=applications)
-application_combobox.pack(pady=5)
-application_combobox.bind("<<ComboboxSelected>>", on_select)
+# Create and pack the vendor combobox
+vendor_label = tk.Label(root, text="Select Vendor:")
+vendor_label.pack(pady=5)
+vendor_combobox = ttk.Combobox(root, values=vendors)
+vendor_combobox.pack(pady=5)
+vendor_combobox.bind("<<ComboboxSelected>>", on_select)
 
 # Create and pack the text widget to display vulnerabilities
 result_text = tk.Text(root, wrap=tk.WORD, width=80, height=20)

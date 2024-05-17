@@ -1,7 +1,8 @@
 import requests
 import json
 import os
-from pick import pick
+import tkinter as tk
+from tkinter import ttk, messagebox
 
 # URL of the JSON file
 url = 'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json'
@@ -15,7 +16,7 @@ def fetch_json_data(url):
     if response.status_code == 200:
         return response.json()
     else:
-        print(f"Failed to fetch data: {response.status_code}")
+        messagebox.showerror("Error", f"Failed to fetch data: {response.status_code}")
         return None
 
 # Function to compare current data with previous data
@@ -55,40 +56,53 @@ def get_unique_applications(vulnerabilities):
 def filter_vulnerabilities_by_application(vulnerabilities, application):
     return [item for item in vulnerabilities if application in item['product']]
 
-# Main function
-def main():
-    # Fetch current data
-    current_data = fetch_json_data(url)
-    if not current_data:
-        return
+# Function to display vulnerabilities in the GUI
+def display_vulnerabilities(vulnerabilities):
+    result_text.delete('1.0', tk.END)
+    for vulnerability in vulnerabilities:
+        result_text.insert(tk.END, f"CVE ID: {vulnerability['cveID']}\n")
+        result_text.insert(tk.END, f"Description: {vulnerability['description']}\n")
+        result_text.insert(tk.END, f"Product: {vulnerability['product']}\n")
+        result_text.insert(tk.END, f"Vendor Project: {vulnerability['vendorProject']}\n")
+        result_text.insert(tk.END, "\n")
 
-    # Load previous data
-    previous_data = load_data_from_file(previous_data_file)
+# Function to handle application selection
+def on_select(event):
+    selected_application = application_combobox.get()
+    filtered_vulnerabilities = filter_vulnerabilities_by_application(current_data['vulnerabilities'], selected_application)
+    display_vulnerabilities(filtered_vulnerabilities)
 
-    # Compare data to find new vulnerabilities
-    new_vulnerabilities = compare_data(current_data['vulnerabilities'], previous_data)
+# Fetch current data
+current_data = fetch_json_data(url)
+if not current_data:
+    exit()
 
-    # Save current data for future comparisons
-    save_data_to_file(current_data['vulnerabilities'], previous_data_file)
+# Load previous data
+previous_data = load_data_from_file(previous_data_file)
 
-    # Get unique applications from the vulnerabilities
-    applications = get_unique_applications(current_data['vulnerabilities'])
+# Compare data to find new vulnerabilities
+new_vulnerabilities = compare_data(current_data['vulnerabilities'], previous_data)
 
-    # Let the user select an application
-    title = 'Please choose an application:'
-    application, index = pick(applications, title)
+# Save current data for future comparisons
+save_data_to_file(current_data['vulnerabilities'], previous_data_file)
 
-    # Filter vulnerabilities by the selected application
-    filtered_vulnerabilities = filter_vulnerabilities_by_application(current_data['vulnerabilities'], application)
+# Get unique applications from the vulnerabilities
+applications = get_unique_applications(current_data['vulnerabilities'])
 
-    # Display the filtered vulnerabilities
-    print(f"Vulnerabilities for {application}:")
-    for vulnerability in filtered_vulnerabilities:
-        print(f"CVE ID: {vulnerability['cveID']}")
-        print(f"Description: {vulnerability['description']}")
-        print(f"Product: {vulnerability['product']}")
-        print(f"Vendor Project: {vulnerability['vendorProject']}")
-        print()
+# Create the main window
+root = tk.Tk()
+root.title("Vulnerability Scanner")
 
-if __name__ == '__main__':
-    main()
+# Create and pack the application combobox
+application_label = tk.Label(root, text="Select Application:")
+application_label.pack(pady=5)
+application_combobox = ttk.Combobox(root, values=applications)
+application_combobox.pack(pady=5)
+application_combobox.bind("<<ComboboxSelected>>", on_select)
+
+# Create and pack the text widget to display vulnerabilities
+result_text = tk.Text(root, wrap=tk.WORD, width=80, height=20)
+result_text.pack(pady=10)
+
+# Start the GUI main loop
+root.mainloop()

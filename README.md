@@ -1,4 +1,4 @@
-# Known Exploited Vulnerabilities Scanner (KVES)
+# Known Exploited Vulnerabilities Scanner (KEVS)
 
 This Python application scans a hosted JSON file from CISA to identify known exploited vulnerabilities. It allows users to select vendors from a picklist, view vulnerabilities related to the selected vendors, and highlight new vulnerabilities added since the last scan.
 

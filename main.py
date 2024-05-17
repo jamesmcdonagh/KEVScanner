@@ -3,6 +3,7 @@ import json
 import os
 import tkinter as tk
 from tkinter import ttk, messagebox
+from datetime import datetime
 
 # URL of the JSON file
 url = 'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json'
@@ -49,9 +50,10 @@ def load_data_from_file(filename):
 def get_unique_vendors(vulnerabilities):
     return sorted(set(item['vendorProject'] for item in vulnerabilities))
 
-# Function to filter vulnerabilities by vendor
+# Function to filter and sort vulnerabilities by vendor
 def filter_vulnerabilities_by_vendor(vulnerabilities, vendor):
-    return [item for item in vulnerabilities if item['vendorProject'] == vendor]
+    filtered_vulnerabilities = [item for item in vulnerabilities if item['vendorProject'] == vendor]
+    return sorted(filtered_vulnerabilities, key=lambda x: datetime.strptime(x['dateAdded'], '%Y-%m-%d'), reverse=True)
 
 # Function to display vulnerabilities in the GUI
 def display_vulnerabilities(vulnerabilities):

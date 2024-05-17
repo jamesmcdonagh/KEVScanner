@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
 import threading
+import webbrowser
 import time  # Import the time module
 
 # URL of the JSON file
@@ -73,6 +74,14 @@ def display_vulnerabilities(vulnerabilities):
         more_details_label.bind("<Button-1>", lambda e, v=vulnerability: show_details(v))
         
         result_text.window_create(tk.END, window=more_details_label)
+        result_text.insert(tk.END, "\n")
+
+        cvss_link = f"https://nvd.nist.gov/vuln/detail/{vulnerability['cveID']}"
+        cvss_label = tk.Label(result_text, text="CVSS Score", fg="blue", cursor="hand2")
+        cvss_label.pack()
+        cvss_label.bind("<Button-1>", lambda e, link=cvss_link: webbrowser.open(link))
+        
+        result_text.window_create(tk.END, window=cvss_label)
         result_text.insert(tk.END, "\n\n")
 
 # Function to handle vendor selection
@@ -82,6 +91,7 @@ def on_select(event):
     save_data_to_file(selected_vendors, selected_vendors_file)
     filtered_vulnerabilities = filter_vulnerabilities_by_vendors(current_data['vulnerabilities'], selected_vendors)
     display_vulnerabilities(filtered_vulnerabilities)
+    display_selected_vendors(selected_vendors)
 
 # Function to refresh data automatically
 def auto_refresh():
@@ -126,6 +136,14 @@ def load_selected_vendors():
             vendor_listbox.select_set(index)
         filtered_vulnerabilities = filter_vulnerabilities_by_vendors(current_data['vulnerabilities'], selected_vendors)
         display_vulnerabilities(filtered_vulnerabilities)
+        display_selected_vendors(selected_vendors)
+
+# Function to display selected vendors
+def display_selected_vendors(selected_vendors):
+    selected_vendors_text.delete('1.0', tk.END)
+    selected_vendors_text.insert(tk.END, "Selected Vendors:\n")
+    for vendor in selected_vendors:
+        selected_vendors_text.insert(tk.END, f"{vendor}\n")
 
 # Fetch current data
 current_data = fetch_json_data(url)
@@ -148,18 +166,32 @@ vendors = get_unique_vendors(current_data['vulnerabilities'])
 root = tk.Tk()
 root.title("Vulnerability Scanner")
 
-# Create and pack the vendor listbox
-vendor_label = tk.Label(root, text="Select Vendors:")
+# Create frames for layout
+left_frame = tk.Frame(root)
+left_frame.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.Y)
+
+middle_frame = tk.Frame(root)
+middle_frame.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.Y)
+
+right_frame = tk.Frame(root)
+right_frame.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=True)
+
+# Create and pack the vendor listbox in the left frame
+vendor_label = tk.Label(left_frame, text="Select Vendors:")
 vendor_label.pack(pady=5)
-vendor_listbox = tk.Listbox(root, selectmode=tk.MULTIPLE, exportselection=False)
+vendor_listbox = tk.Listbox(left_frame, selectmode=tk.MULTIPLE, exportselection=False)
 for vendor in vendors:
     vendor_listbox.insert(tk.END, vendor)
-vendor_listbox.pack(pady=5)
+vendor_listbox.pack(pady=5, fill=tk.Y)
 vendor_listbox.bind("<<ListboxSelect>>", on_select)
 
-# Create and pack the text widget to display vulnerabilities
-result_text = tk.Text(root, wrap=tk.WORD, width=80, height=20)
-result_text.pack(pady=10)
+# Create and pack the text widget to display selected vendors in the middle frame
+selected_vendors_text = tk.Text(middle_frame, wrap=tk.WORD, width=40, height=20)
+selected_vendors_text.pack(pady=10, fill=tk.Y)
+
+# Create and pack the text widget to display vulnerabilities in the right frame
+result_text = tk.Text(right_frame, wrap=tk.WORD, width=80, height=20)
+result_text.pack(pady=10, fill=tk.BOTH, expand=True)
 
 # Load previously selected vendors
 load_selected_vendors()

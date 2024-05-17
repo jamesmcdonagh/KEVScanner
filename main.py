@@ -145,6 +145,14 @@ def display_selected_vendors(selected_vendors):
     for vendor in selected_vendors:
         selected_vendors_text.insert(tk.END, f"{vendor}\n")
 
+# Function to filter the vendor list based on the search query
+def filter_vendors(*args):
+    search_query = search_var.get().lower()
+    vendor_listbox.delete(0, tk.END)
+    for vendor in vendors:
+        if search_query in vendor.lower():
+            vendor_listbox.insert(tk.END, vendor)
+
 # Fetch current data
 current_data = fetch_json_data(url)
 if not current_data:
@@ -175,6 +183,12 @@ middle_frame.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.Y)
 
 right_frame = tk.Frame(root)
 right_frame.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=True)
+
+# Create and pack the vendor search box
+search_var = tk.StringVar()
+search_var.trace("w", filter_vendors)
+search_entry = tk.Entry(left_frame, textvariable=search_var, width=30)
+search_entry.pack(pady=5)
 
 # Create and pack the vendor listbox in the left frame
 vendor_label = tk.Label(left_frame, text="Select Vendors:")

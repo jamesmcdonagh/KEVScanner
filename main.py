@@ -60,10 +60,12 @@ def filter_vulnerabilities_by_vendors(vulnerabilities, selected_vendors):
     return sorted(filtered_vulnerabilities, key=lambda x: datetime.strptime(x['dateAdded'], '%Y-%m-%d'), reverse=True)
 
 # Function to display vulnerabilities in the GUI
-def display_vulnerabilities(vulnerabilities):
+def display_vulnerabilities(vulnerabilities, new_vulnerabilities):
     result_text.delete('1.0', tk.END)
     for vulnerability in vulnerabilities:
-        result_text.insert(tk.END, f"CVE ID: {vulnerability['cveID']}\n")
+        is_new = vulnerability in new_vulnerabilities
+        tag = "new" if is_new else "normal"
+        result_text.insert(tk.END, f"CVE ID: {vulnerability['cveID']}\n", tag)
         result_text.insert(tk.END, f"Product: {vulnerability['product']}\n")
         result_text.insert(tk.END, f"Vulnerability Name: {vulnerability['vulnerabilityName']}\n")
         result_text.insert(tk.END, f"Date Added: {vulnerability['dateAdded']}\n")
@@ -84,13 +86,17 @@ def display_vulnerabilities(vulnerabilities):
         result_text.window_create(tk.END, window=cvss_label)
         result_text.insert(tk.END, "\n\n")
 
+    result_text.tag_configure("new", background="yellow")
+    result_text.tag_configure("normal", background="white")
+
 # Function to handle vendor selection
 def on_select(event):
     selected_indices = vendor_listbox.curselection()
     selected_vendors = [vendor_listbox.get(i) for i in selected_indices]
     save_data_to_file(selected_vendors, selected_vendors_file)
     filtered_vulnerabilities = filter_vulnerabilities_by_vendors(current_data['vulnerabilities'], selected_vendors)
-    display_vulnerabilities(filtered_vulnerabilities)
+    new_vulnerabilities = compare_data(current_data['vulnerabilities'], previous_data)
+    display_vulnerabilities(filtered_vulnerabilities, new_vulnerabilities)
     display_selected_vendors(selected_vendors)
 
 # Function to refresh data automatically
@@ -101,7 +107,7 @@ def auto_refresh():
 
 # Function to fetch and update data
 def fetch_and_update_data():
-    global current_data
+    global current_data, previous_data
     new_data = fetch_json_data(url)
     if new_data:
         current_data = new_data
@@ -135,7 +141,8 @@ def load_selected_vendors():
             index = vendor_listbox.get(0, tk.END).index(vendor)
             vendor_listbox.select_set(index)
         filtered_vulnerabilities = filter_vulnerabilities_by_vendors(current_data['vulnerabilities'], selected_vendors)
-        display_vulnerabilities(filtered_vulnerabilities)
+        new_vulnerabilities = compare_data(current_data['vulnerabilities'], previous_data)
+        display_vulnerabilities(filtered_vulnerabilities, new_vulnerabilities)
         display_selected_vendors(selected_vendors)
 
 # Function to display selected vendors

@@ -1,1 +1,7 @@
-
+{
+    "vendors": [
+        "Google",
+        "Microsoft",
+        "SonicWall"
+    ]
+}

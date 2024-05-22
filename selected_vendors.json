@@ -1,5 +1,8 @@
 {
     "vendors": [
-        "Veeam"
+        "Accellion",
+        "Apple",
+        "Arcadyan",
+        "Atlassian"
     ]
 }
